@@ -1,2 +1,8 @@
+import argparse
+from workbench import __version__
+
+
 def main():
-    print("workbench v0.1.0")
+    parser = argparse.ArgumentParser(prog="workbench")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    parser.parse_args()
