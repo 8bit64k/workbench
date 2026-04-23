@@ -1,3 +1,3 @@
 # workbench
 
-CLI project scaffolding tool.
+CLI project scaffolding tool. Work in progress.
