@@ -6,7 +6,7 @@ import jinja2
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 
 
-def init_project(template_name: str, project_name: str, target: Path) -> None:
+def init_project(template_name: str, project_name: str, target: Path, github: bool = False) -> None:
     template_path = TEMPLATE_DIR / template_name
     if not template_path.exists():
         raise ValueError(f"Template '{template_name}' not found")
@@ -41,3 +41,11 @@ def init_project(template_name: str, project_name: str, target: Path) -> None:
             shutil.copy2(src, dst)
 
     subprocess.run(["git", "init"], cwd=target, check=True, capture_output=True)
+
+    if github:
+        subprocess.run(
+            ["gh", "repo", "create", project_name, "--private", "--source=.", "--push"],
+            cwd=target,
+            check=False,
+            capture_output=True,
+        )

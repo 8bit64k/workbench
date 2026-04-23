@@ -15,6 +15,17 @@ def test_init_python_creates_structure():
         assert (target / ".git").is_dir()
 
 
+def test_init_with_github_calls_gh():
+    from unittest.mock import patch, MagicMock
+    with tempfile.TemporaryDirectory() as tmp:
+        target = Path(tmp) / "gh-test"
+        with patch("workbench.scaffold.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            init_project("python", "gh-test", target, github=True)
+            calls = [c for c in mock_run.call_args_list if "gh" in str(c)]
+            assert len(calls) >= 1
+
+
 def test_unknown_template_raises():
     with tempfile.TemporaryDirectory() as tmp:
         with pytest.raises(ValueError, match="not found"):
