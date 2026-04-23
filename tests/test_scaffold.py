@@ -11,3 +11,4 @@ def test_init_python_creates_structure():
         assert (target / "README.md").exists()
         assert (target / "src" / "my_project" / "__init__.py").exists()
         assert (target / "tests" / "test_stub.py").exists()
+        assert (target / ".git").is_dir()

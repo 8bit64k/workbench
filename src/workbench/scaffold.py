@@ -1,5 +1,6 @@
 from pathlib import Path
 import shutil
+import subprocess
 import jinja2
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
@@ -38,3 +39,5 @@ def init_project(template_name: str, project_name: str, target: Path) -> None:
             dst.write_text(rendered)
         else:
             shutil.copy2(src, dst)
+
+    subprocess.run(["git", "init"], cwd=target, check=True, capture_output=True)
