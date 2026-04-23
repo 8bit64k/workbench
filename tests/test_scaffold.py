@@ -4,6 +4,25 @@ from workbench.scaffold import init_project
 import pytest
 
 
+def test_init_library_creates_structure():
+    with tempfile.TemporaryDirectory() as tmp:
+        target = Path(tmp) / "my-lib"
+        init_project("library", "my-lib", target)
+        assert (target / "pyproject.toml").exists()
+        assert (target / "README.md").exists()
+        assert (target / "src" / "my_lib" / "__init__.py").exists()
+        assert (target / "src" / "my_lib" / "core.py").exists()
+        assert (target / "tests" / "test_core.py").exists()
+        assert (target / ".git").is_dir()
+        # Verify pyproject.toml has library-specific content
+        pyproject = (target / "pyproject.toml").read_text()
+        assert "classifiers" in pyproject
+        assert "[project.optional-dependencies]" in pyproject
+        # Verify README has usage example
+        readme = (target / "README.md").read_text()
+        assert "from my_lib.core import greet" in readme
+
+
 def test_init_python_creates_structure():
     with tempfile.TemporaryDirectory() as tmp:
         target = Path(tmp) / "my-project"
