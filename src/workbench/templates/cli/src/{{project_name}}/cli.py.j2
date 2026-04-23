@@ -1,0 +1,21 @@
+import argparse
+import sys
+
+from {{project_name}} import __version__
+
+
+def main():
+    parser = argparse.ArgumentParser(prog="{{project_name}}")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    subparsers = parser.add_subparsers(dest="command")
+
+    hello_parser = subparsers.add_parser("hello", help="Say hello")
+    hello_parser.add_argument("name", nargs="?", default="World")
+
+    args = parser.parse_args()
+
+    if args.command == "hello":
+        print(f"Hello, {args.name}!")
+    else:
+        parser.print_help()
+        sys.exit(1)

@@ -11,7 +11,7 @@ def main():
     subparsers = parser.add_subparsers(dest="command")
 
     init_parser = subparsers.add_parser("init", help="Initialize a new project")
-    init_parser.add_argument("template", choices=["python", "library"])
+    init_parser.add_argument("template", choices=["python", "library", "cli"])
     init_parser.add_argument("name")
     init_parser.add_argument("--github", action="store_true", help="Create a private GitHub repo and push")
 
@@ -21,6 +21,7 @@ def main():
         descriptions = {
             "python": "A Python project.",
             "library": "A reusable Python library package.",
+            "cli": "A command-line interface tool.",
         }
         target = Path.cwd() / args.name
         init_project(

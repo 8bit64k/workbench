@@ -4,6 +4,26 @@ from workbench.scaffold import init_project
 import pytest
 
 
+def test_init_cli_creates_structure():
+    with tempfile.TemporaryDirectory() as tmp:
+        target = Path(tmp) / "my-cli"
+        init_project("cli", "my-cli", target)
+        assert (target / "pyproject.toml").exists()
+        assert (target / "README.md").exists()
+        assert (target / "src" / "my_cli" / "__init__.py").exists()
+        assert (target / "src" / "my_cli" / "cli.py").exists()
+        assert (target / "tests" / "test_cli.py").exists()
+        assert (target / ".git").is_dir()
+        # Verify pyproject.toml has CLI entry point
+        pyproject = (target / "pyproject.toml").read_text()
+        assert "[project.scripts]" in pyproject
+        assert 'my_cli = "my_cli.cli:main"' in pyproject
+        # Verify CLI has argparse structure
+        cli_code = (target / "src" / "my_cli" / "cli.py").read_text()
+        assert "argparse" in cli_code
+        assert "subparsers" in cli_code
+
+
 def test_init_library_creates_structure():
     with tempfile.TemporaryDirectory() as tmp:
         target = Path(tmp) / "my-lib"

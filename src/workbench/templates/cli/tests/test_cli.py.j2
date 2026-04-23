@@ -1,0 +1,28 @@
+import pytest
+import subprocess
+import sys
+
+from {{project_name}}.cli import main
+
+
+def test_version_flag(capsys):
+    with pytest.raises(SystemExit) as exc:
+        sys.argv = ["{{project_name}}", "--version"]
+        main()
+    assert exc.value.code == 0
+    captured = capsys.readouterr()
+    assert "{{project_name}}" in captured.out
+
+
+def test_hello_command(capsys):
+    sys.argv = ["{{project_name}}", "hello"]
+    main()
+    captured = capsys.readouterr()
+    assert "Hello, World!" in captured.out
+
+
+def test_hello_with_name(capsys):
+    sys.argv = ["{{project_name}}", "hello", "Alice"]
+    main()
+    captured = capsys.readouterr()
+    assert "Hello, Alice!" in captured.out
