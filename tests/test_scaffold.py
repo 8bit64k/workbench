@@ -22,6 +22,11 @@ def test_init_cli_creates_structure():
         cli_code = (target / "src" / "my_cli" / "cli.py").read_text()
         assert "argparse" in cli_code
         assert "subparsers" in cli_code
+        # Verify tests use monkeypatch (not brittle sys.argv mutation)
+        test_code = (target / "tests" / "test_cli.py").read_text()
+        assert "monkeypatch" in test_code
+        assert "test_bare_invocation_prints_help" in test_code
+        assert "test_unknown_subcommand_exits_with_error" in test_code
 
 
 def test_init_library_creates_structure():

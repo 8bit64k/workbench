@@ -1,28 +1,46 @@
-import pytest
-import subprocess
 import sys
+
+import pytest
 
 from {{project_name}}.cli import main
 
 
-def test_version_flag(capsys):
+def test_version_flag(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["{{project_name}}", "--version"])
     with pytest.raises(SystemExit) as exc:
-        sys.argv = ["{{project_name}}", "--version"]
         main()
     assert exc.value.code == 0
     captured = capsys.readouterr()
     assert "{{project_name}}" in captured.out
 
 
-def test_hello_command(capsys):
-    sys.argv = ["{{project_name}}", "hello"]
+def test_hello_command(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["{{project_name}}", "hello"])
     main()
     captured = capsys.readouterr()
     assert "Hello, World!" in captured.out
 
 
-def test_hello_with_name(capsys):
-    sys.argv = ["{{project_name}}", "hello", "Alice"]
+def test_hello_with_name(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["{{project_name}}", "hello", "Alice"])
     main()
     captured = capsys.readouterr()
     assert "Hello, Alice!" in captured.out
+
+
+def test_bare_invocation_prints_help(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["{{project_name}}"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
+    captured = capsys.readouterr()
+    assert "usage:" in captured.out
+
+
+def test_unknown_subcommand_exits_with_error(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["{{project_name}}", "notacommand"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 2
+    captured = capsys.readouterr()
+    assert "invalid choice" in captured.err or "error" in captured.err.lower()
