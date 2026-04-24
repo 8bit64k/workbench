@@ -15,6 +15,13 @@ def test_init_cli_creates_structure():
         assert (target / "tests" / "test_cli.py").exists()
         assert (target / ".git").is_dir()
         assert (target / ".github" / "workflows" / "test.yml").exists()
+        # Verify Makefile exists with standard targets
+        makefile = (target / "Makefile").read_text()
+        assert "test:" in makefile
+        assert "install:" in makefile
+        assert "clean:" in makefile
+        # Verify pre-commit config exists
+        assert (target / ".pre-commit-config.yaml").exists()
         # Verify pyproject.toml has CLI entry point
         pyproject = (target / "pyproject.toml").read_text()
         assert "[project.scripts]" in pyproject
@@ -41,6 +48,13 @@ def test_init_library_creates_structure():
         assert (target / "tests" / "test_core.py").exists()
         assert (target / ".git").is_dir()
         assert (target / ".github" / "workflows" / "test.yml").exists()
+        # Verify Makefile exists with standard targets
+        makefile = (target / "Makefile").read_text()
+        assert "test:" in makefile
+        assert "install:" in makefile
+        assert "clean:" in makefile
+        # Verify pre-commit config exists
+        assert (target / ".pre-commit-config.yaml").exists()
         # Verify pyproject.toml has library-specific content
         pyproject = (target / "pyproject.toml").read_text()
         assert "classifiers" in pyproject
@@ -61,6 +75,14 @@ def test_init_fastapi_creates_structure():
         assert (target / "tests" / "test_main.py").exists()
         assert (target / ".git").is_dir()
         assert (target / ".github" / "workflows" / "test.yml").exists()
+        # Verify Makefile exists with standard targets
+        makefile = (target / "Makefile").read_text()
+        assert "test:" in makefile
+        assert "install:" in makefile
+        assert "clean:" in makefile
+        assert "run:" in makefile
+        # Verify pre-commit config exists
+        assert (target / ".pre-commit-config.yaml").exists()
         # Verify FastAPI dependency
         pyproject = (target / "pyproject.toml").read_text()
         assert "fastapi" in pyproject
@@ -81,9 +103,26 @@ def test_init_python_creates_structure():
         assert (target / "pyproject.toml").exists()
         assert (target / "README.md").exists()
         assert (target / "src" / "my_project" / "__init__.py").exists()
-        assert (target / "tests" / "test_stub.py").exists()
+        assert (target / "src" / "my_project" / "core.py").exists()
+        assert (target / "tests" / "test_core.py").exists()
         assert (target / ".git").is_dir()
         assert (target / ".github" / "workflows" / "test.yml").exists()
+        # Verify Makefile exists with standard targets
+        makefile = (target / "Makefile").read_text()
+        assert "test:" in makefile
+        assert "install:" in makefile
+        assert "clean:" in makefile
+        # Verify pre-commit config exists
+        assert (target / ".pre-commit-config.yaml").exists()
+        # Verify ruff is configured
+        pyproject = (target / "pyproject.toml").read_text()
+        assert "ruff" in pyproject
+        # Verify README has usage example
+        readme = (target / "README.md").read_text()
+        assert "from my_project.core import" in readme
+        # Verify tests are real (not assert True)
+        test_code = (target / "tests" / "test_core.py").read_text()
+        assert "assert True" not in test_code
 
 
 def test_init_with_github_calls_gh():
