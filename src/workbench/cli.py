@@ -189,6 +189,26 @@ def _print_completion(shell: str) -> None:
         print(_FISH_COMPLETION)
 
 
+def _check_for_update() -> None:
+    import urllib.request
+    import urllib.error
+    try:
+        req = urllib.request.Request(
+            "https://pypi.org/pypi/workbench/json",
+            headers={"Accept": "application/json", "User-Agent": "workbench-cli"},
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        latest = data["info"]["version"]
+        if latest != __version__:
+            print(f"A new version of workbench is available: {latest} (you have {__version__})", file=sys.stderr)
+            print(f"Run `uv pip install -U workbench` to upgrade.", file=sys.stderr)
+        else:
+            print(f"workbench {__version__} is up to date.")
+    except Exception:
+        print("Could not check for updates.", file=sys.stderr)
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="workbench",
@@ -201,6 +221,7 @@ def main():
     parser.add_argument("--no-color", action="store_true", help="Disable colored output")
     parser.add_argument("--template-dir", type=str, default=None, help="Custom template directory (or set WORKBENCH_TEMPLATE_DIR)")
     parser.add_argument("--generate-completion", choices=["bash", "zsh", "fish"], help="Print shell completion script to stdout")
+    parser.add_argument("--check-update", action="store_true", help="Check PyPI for a newer version")
     subparsers = parser.add_subparsers(dest="command")
 
     init_parser = subparsers.add_parser(
@@ -279,6 +300,10 @@ def main():
 
     if args.generate_completion:
         _print_completion(args.generate_completion)
+        sys.exit(0)
+
+    if args.check_update:
+        _check_for_update()
         sys.exit(0)
 
     use_color = _should_use_color(args.no_color)

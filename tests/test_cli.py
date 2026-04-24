@@ -414,3 +414,22 @@ def test_post_init_hook_skipped_with_no_hooks(capsys, monkeypatch, tmp_path):
     main()
     target = tmp_path / "hook-proj2"
     assert not (target / "hook-marker.txt").exists()
+
+
+def test_check_update_flag(capsys, monkeypatch):
+    import urllib.request
+    class FakeResp:
+        def read(self):
+            return b'{"info": {"version": "99.0.0"}}'
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
+    monkeypatch.setattr(urllib.request, "urlopen", lambda req, timeout=None: FakeResp())
+    monkeypatch.setattr(sys, "argv", ["workbench", "--check-update"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 0
+    captured = capsys.readouterr()
+    assert "A new version of workbench is available" in captured.err
+    assert "99.0.0" in captured.err
