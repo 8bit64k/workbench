@@ -1,4 +1,5 @@
 import argparse
+import difflib
 import os
 import sys
 from pathlib import Path
@@ -49,8 +50,13 @@ def main():
     custom_dir = _template_dir_from_args(args)
 
     if args.command == "init":
-        if args.template not in get_templates(custom_dir):
-            print(f"Error: Unknown template '{args.template}'.", file=sys.stderr)
+        templates = get_templates(custom_dir)
+        if args.template not in templates:
+            msg = f"Error: Unknown template '{args.template}'."
+            close = difflib.get_close_matches(args.template, templates, n=1)
+            if close:
+                msg += f" Did you mean '{close[0]}'?"
+            print(msg, file=sys.stderr)
             sys.exit(1)
         descriptions = {
             "python": "A Python project.",
@@ -62,16 +68,23 @@ def main():
         if args.verbose:
             print(f"[debug] Using template: {args.template}")
             print(f"[debug] Target path: {target}")
-        actions = init_project(
-            args.template,
-            args.name,
-            target,
-            github=args.github,
-            project_description=descriptions.get(args.template, "A Python project."),
-            dry_run=args.dry_run,
-            force=args.force,
-            template_dir=custom_dir,
-        )
+        try:
+            actions = init_project(
+                args.template,
+                args.name,
+                target,
+                github=args.github,
+                project_description=descriptions.get(args.template, "A Python project."),
+                dry_run=args.dry_run,
+                force=args.force,
+                template_dir=custom_dir,
+            )
+        except FileExistsError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            sys.exit(1)
+        except ValueError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            sys.exit(1)
         if args.verbose:
             print(f"[debug] Files generated: {len(actions)}")
         if not args.quiet:
@@ -85,6 +98,9 @@ def main():
                     print("GitHub repo created (if gh is authenticated)")
     elif args.command == "list":
         templates = get_templates(custom_dir)
+        if not templates:
+            print("Warning: No templates found.")
+            sys.exit(0)
         if not args.quiet:
             print("Available templates:")
             for name in templates:

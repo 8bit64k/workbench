@@ -58,6 +58,27 @@ def test_info_unknown_template_exits_with_error(capsys, monkeypatch):
     assert "Unknown template" in captured.err
 
 
+def test_init_unknown_template_shows_suggestion(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "init", "pthon", "bad-proj"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
+    captured = capsys.readouterr()
+    assert "Unknown template" in captured.err
+    assert "python" in captured.err.lower()  # Should suggest 'python'
+
+
+def test_list_with_no_templates_shows_warning(capsys, monkeypatch, tmp_path):
+    empty_dir = tmp_path / "empty"
+    empty_dir.mkdir()
+    monkeypatch.setattr(sys, "argv", ["workbench", "--template-dir", str(empty_dir), "list"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 0
+    captured = capsys.readouterr()
+    assert "Warning: No templates found." in captured.out
+
+
 def test_init_dry_run_flag(capsys, monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "argv", ["workbench", "init", "python", "dry-proj", "--dry-run"])
     monkeypatch.chdir(tmp_path)
