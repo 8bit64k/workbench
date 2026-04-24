@@ -8,15 +8,16 @@ version = "0.1.0"
 description = "{{project_description}}"
 readme = "README.md"
 requires-python = ">=3.12"
-classifiers = [
+{% if author %}authors = [{ name = "{{author}}"{% if email %}, email = "{{email}}"{% endif %} }]
+{% endif %}classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: {{license}} License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Environment :: Console",
 ]
-license = { text = "MIT" }
+license = { text = "{{license}}" }
 
 [project.scripts]
 {{project_name}} = "{{project_name}}.cli:main"

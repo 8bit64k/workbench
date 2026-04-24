@@ -258,6 +258,39 @@ def test_error_suggests_dry_run_and_force(capsys, monkeypatch, tmp_path):
     assert "--force" in captured.err
 
 
+def test_init_uses_config_author_and_license(capsys, monkeypatch, tmp_path):
+    from workbench import config as config_module
+    monkeypatch.setattr(config_module, "_get_config_dir", lambda: tmp_path / "workbench")
+    config_module.save_config({"author": "8bit64k", "email": "8bit64k@example.com", "license": "Apache-2.0"})
+    monkeypatch.setattr(sys, "argv", ["workbench", "init", "python", "config-proj"])
+    monkeypatch.chdir(tmp_path)
+    main()
+    target = tmp_path / "config-proj"
+    assert target.exists()
+    pyproject = (target / "pyproject.toml").read_text()
+    assert 'name = "8bit64k"' in pyproject
+    assert 'email = "8bit64k@example.com"' in pyproject
+    assert 'text = "Apache-2.0"' in pyproject
+    assert "License :: OSI Approved :: Apache-2.0 License" in pyproject
+
+
+def test_init_uses_config_template_dir(capsys, monkeypatch, tmp_path):
+    from workbench import config as config_module
+    monkeypatch.setattr(config_module, "_get_config_dir", lambda: tmp_path / "workbench")
+    custom_dir = tmp_path / "custom_templates"
+    custom_dir.mkdir()
+    tpl = custom_dir / "custom"
+    tpl.mkdir()
+    (tpl / "pyproject.toml.j2").write_text("[project]\nname = \"{{project_name}}\"\n")
+    config_module.save_config({"default_template_dir": str(custom_dir)})
+    monkeypatch.setattr(sys, "argv", ["workbench", "init", "custom", "cfg-tpl-proj"])
+    monkeypatch.chdir(tmp_path)
+    main()
+    target = tmp_path / "cfg-tpl-proj"
+    assert target.exists()
+    assert (target / "pyproject.toml").exists()
+
+
 def test_validate_fails_for_broken_jinja(capsys, monkeypatch, tmp_path):
     from workbench.scaffold import TEMPLATE_DIR
     # Create a temporary broken template

@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from workbench import __version__
 from workbench.scaffold import init_project, get_templates, get_template_info
+from workbench.config import load_config
 
 BUG_REPORT_URL = "https://github.com/8bit64k/workbench/issues"
 
@@ -37,6 +38,10 @@ def _template_dir_from_args(args) -> Path | None:
     env = os.environ.get("WORKBENCH_TEMPLATE_DIR")
     if env:
         return Path(env)
+    cfg = load_config()
+    cfg_dir = cfg.get("default_template_dir")
+    if cfg_dir:
+        return Path(cfg_dir)
     return None
 
 
@@ -150,6 +155,7 @@ def main():
             print(f"[debug] Using template: {args.template}")
             print(f"[debug] Target path: {target}")
         try:
+            cfg = load_config()
             actions = init_project(
                 args.template,
                 args.name,
@@ -159,6 +165,9 @@ def main():
                 dry_run=args.dry_run,
                 force=args.force,
                 template_dir=custom_dir,
+                author=cfg.get("author"),
+                email=cfg.get("email"),
+                license=cfg.get("license"),
             )
         except FileExistsError as exc:
             msg = _fmt(f"Error: {exc}", _RED, use_color)

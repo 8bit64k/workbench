@@ -67,7 +67,7 @@ def validate_template(template_name: str, template_dir: Path | None = None) -> l
     return errors
 
 
-def init_project(template_name: str, project_name: str, target: Path, github: bool = False, project_description: str | None = None, dry_run: bool = False, force: bool = False, template_dir: Path | None = None) -> list[str]:
+def init_project(template_name: str, project_name: str, target: Path, github: bool = False, project_description: str | None = None, dry_run: bool = False, force: bool = False, template_dir: Path | None = None, author: str | None = None, email: str | None = None, license: str | None = None) -> list[str]:
     dir_ = _resolve_dir(template_dir)
     template_path = dir_ / template_name
     if not template_path.exists():
@@ -108,6 +108,9 @@ def init_project(template_name: str, project_name: str, target: Path, github: bo
             rendered = template.render(
                 project_name=snake_name,
                 project_description=project_description or "A Python project.",
+                author=author,
+                email=email,
+                license=license or "MIT",
             )
             dst = dst.with_suffix("")  # strip .j2
             if not dry_run:
