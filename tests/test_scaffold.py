@@ -142,10 +142,39 @@ def test_unknown_template_raises():
             init_project("nonexistent", "x", Path(tmp) / "x")
 
 
+def test_init_into_empty_existing_dir_succeeds():
+    with tempfile.TemporaryDirectory() as tmp:
+        target = Path(tmp) / "empty-dir"
+        target.mkdir()
+        init_project("python", "empty-dir", target)
+        assert (target / "pyproject.toml").exists()
+
+
+def test_init_into_nonempty_dir_without_force_raises():
+    with tempfile.TemporaryDirectory() as tmp:
+        target = Path(tmp) / "nonempty"
+        target.mkdir()
+        (target / "existing.txt").write_text("I exist")
+        with pytest.raises(FileExistsError):
+            init_project("python", "nonempty", target)
+
+
+def test_init_into_nonempty_dir_with_force_succeeds():
+    with tempfile.TemporaryDirectory() as tmp:
+        target = Path(tmp) / "force-dir"
+        target.mkdir()
+        (target / "existing.txt").write_text("I exist")
+        init_project("python", "force-dir", target, force=True)
+        assert (target / "pyproject.toml").exists()
+        # Old file should still be there (we don't delete, we just allow overwrite)
+        assert (target / "existing.txt").exists()
+
+
 def test_target_exists_raises():
     with tempfile.TemporaryDirectory() as tmp:
         target = Path(tmp) / "exists"
         target.mkdir()
+        (target / "existing.txt").write_text("I exist")
         with pytest.raises(FileExistsError):
             init_project("python", "exists", target)
 

@@ -20,6 +20,7 @@ def main():
     init_parser.add_argument("--github", action="store_true", help="Create a private GitHub repo and push")
     init_parser.add_argument("--dry-run", action="store_true", help="Show what would be created without writing files")
     init_parser.add_argument("--output", "-o", type=str, default=".", help="Target directory (default: current directory)")
+    init_parser.add_argument("--force", action="store_true", help="Scaffold into an existing non-empty directory")
 
     list_parser = subparsers.add_parser("list", help="List available templates")
     list_parser.add_argument("--quiet", "-q", action="store_true", help="Suppress non-error output")
@@ -48,6 +49,7 @@ def main():
             github=args.github,
             project_description=descriptions.get(args.template, "A Python project."),
             dry_run=args.dry_run,
+            force=args.force,
         )
         if args.verbose:
             print(f"[debug] Files generated: {len(actions)}")

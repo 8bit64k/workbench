@@ -30,13 +30,22 @@ def get_template_info(template_name: str) -> dict:
         "files": sorted(files),
     }
 
-def init_project(template_name: str, project_name: str, target: Path, github: bool = False, project_description: str | None = None, dry_run: bool = False) -> list[str]:
+def init_project(template_name: str, project_name: str, target: Path, github: bool = False, project_description: str | None = None, dry_run: bool = False, force: bool = False) -> list[str]:
     template_path = TEMPLATE_DIR / template_name
     if not template_path.exists():
         raise ValueError(f"Template '{template_name}' not found")
 
     if not dry_run:
-        target.mkdir(parents=True, exist_ok=False)
+        if target.exists():
+            # Allow empty dirs (just .git or nothing) without force
+            existing_files = [f for f in target.iterdir() if f.name != ".git"]
+            if existing_files and not force:
+                raise FileExistsError(
+                    f"Target directory '{target}' already exists and is not empty. "
+                    f"Use --force to scaffold into it anyway."
+                )
+        else:
+            target.mkdir(parents=True, exist_ok=False)
     snake_name = project_name.replace("-", "_").lower()
 
     env = jinja2.Environment()
