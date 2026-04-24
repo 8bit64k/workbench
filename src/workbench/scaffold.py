@@ -12,6 +12,24 @@ def get_templates() -> list[str]:
         p.name for p in TEMPLATE_DIR.iterdir() if p.is_dir() and not p.name.startswith(".")
     )
 
+
+def get_template_info(template_name: str) -> dict:
+    """Return metadata about a template: name, files, and variables."""
+    template_path = TEMPLATE_DIR / template_name
+    if not template_path.exists():
+        raise ValueError(f"Template '{template_name}' not found")
+
+    files = []
+    for src in template_path.rglob("*"):
+        if src.is_file():
+            rel = src.relative_to(template_path)
+            files.append(str(rel))
+
+    return {
+        "name": template_name,
+        "files": sorted(files),
+    }
+
 def init_project(template_name: str, project_name: str, target: Path, github: bool = False, project_description: str | None = None) -> None:
     template_path = TEMPLATE_DIR / template_name
     if not template_path.exists():

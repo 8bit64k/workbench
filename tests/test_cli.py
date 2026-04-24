@@ -39,3 +39,20 @@ def test_list_command(capsys, monkeypatch):
     assert "python" in captured.out
     assert "library" in captured.out
     assert "cli" in captured.out
+
+
+def test_info_command_shows_template_details(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "info", "python"])
+    main()
+    captured = capsys.readouterr()
+    assert "python" in captured.out
+    assert "pyproject.toml" in captured.out or "files" in captured.out.lower()
+
+
+def test_info_unknown_template_exits_with_error(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "info", "nonexistent"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 2
+    captured = capsys.readouterr()
+    assert "invalid choice" in captured.err or "not found" in captured.err.lower()
