@@ -1,8 +1,7 @@
+import json
 import sys
-
-import pytest
-
 from workbench.cli import main
+import pytest
 
 
 def test_version_flag(capsys, monkeypatch):
@@ -152,6 +151,111 @@ def test_validate_passes_for_good_template(capsys, monkeypatch):
     main()
     captured = capsys.readouterr()
     assert "valid" in captured.out.lower() or "pass" in captured.out.lower()
+
+
+def test_init_dry_run_short_flag(capsys, monkeypatch, tmp_path):
+    monkeypatch.setattr(sys, "argv", ["workbench", "init", "python", "short-dry", "-n"])
+    monkeypatch.chdir(tmp_path)
+    main()
+    target = tmp_path / "short-dry"
+    assert not target.exists()
+    captured = capsys.readouterr()
+    assert "Would create" in captured.out
+
+
+def test_list_json_output(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "list", "--json"])
+    main()
+    captured = capsys.readouterr()
+    out = json.loads(captured.out)
+    assert isinstance(out, list)
+    assert "python" in out
+
+
+def test_list_plain_output(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "list", "--plain"])
+    main()
+    captured = capsys.readouterr()
+    lines = [line for line in captured.out.splitlines() if line]
+    assert "python" in lines
+    assert "cli" in lines
+
+
+def test_info_json_output(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "info", "python", "--json"])
+    main()
+    captured = capsys.readouterr()
+    out = json.loads(captured.out)
+    assert out["name"] == "python"
+    assert isinstance(out["files"], list)
+
+
+def test_info_plain_output(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "info", "python", "--plain"])
+    main()
+    captured = capsys.readouterr()
+    lines = captured.out.splitlines()
+    assert lines[0] == "python"
+    assert "pyproject.toml.j2" in lines
+
+
+def test_bare_init_shows_concise_help(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "init"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
+    captured = capsys.readouterr()
+    assert "workbench init" in captured.out
+    assert "Example:" in captured.out
+
+
+def test_bare_info_shows_concise_help(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "info"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
+    captured = capsys.readouterr()
+    assert "workbench info" in captured.out
+
+
+def test_bare_validate_shows_concise_help(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "validate"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
+    captured = capsys.readouterr()
+    assert "workbench validate" in captured.out
+
+
+def test_validate_json_output(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "validate", "python", "--json"])
+    main()
+    captured = capsys.readouterr()
+    out = json.loads(captured.out)
+    assert out["valid"] is True
+    assert out["errors"] == []
+
+
+def test_no_color_flag_disables_color(capsys, monkeypatch, tmp_path):
+    monkeypatch.setattr(sys, "argv", ["workbench", "--no-color", "init", "python", "no-color-proj"])
+    monkeypatch.chdir(tmp_path)
+    main()
+    captured = capsys.readouterr()
+    # ANSI codes should not appear
+    assert "\033[1m" not in captured.out
+
+
+def test_error_suggests_dry_run_and_force(capsys, monkeypatch, tmp_path):
+    (tmp_path / "exists-proj").mkdir()
+    (tmp_path / "exists-proj" / "file.txt").write_text("x")
+    monkeypatch.setattr(sys, "argv", ["workbench", "init", "python", "exists-proj"])
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
+    captured = capsys.readouterr()
+    assert "--dry-run" in captured.err or "-n" in captured.err
+    assert "--force" in captured.err
 
 
 def test_validate_fails_for_broken_jinja(capsys, monkeypatch, tmp_path):

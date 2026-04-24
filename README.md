@@ -44,6 +44,15 @@ workbench init library my-lib --output ~/Code/
 # Preview what would be created (no files written)
 workbench init python my-project --dry-run
 
+# Same as above, short flag
+workbench init python my-project -n
+
+# Output as JSON for piping to other tools
+workbench list --json | jq '.[]'
+
+# Plain output for grep/awk
+workbench list --plain | grep fastapi
+
 # Scaffold and create a private GitHub repo (requires gh CLI auth)
 workbench init python my-project --github
 
@@ -63,7 +72,10 @@ workbench validate my-template
 ### Scaffolding
 - **`workbench init <template> <name>`** — Generates a complete project from a template.
 - **`--output <path>` / `-o <path>`** — Scaffold into a custom directory instead of the current working directory.
-- **`--dry-run`** — Preview every file that would be created without writing anything to disk. Essential for scripting and sanity-checking.
+- **`--json`** — Output as JSON for piping, scripting, and integration with other tools.
+- **`--plain`** — Output plain line-based text (no headers or indentation) for use with grep, awk, and other UNIX tools.
+- **`--no-color`** — Disable colored output. Also respects `NO_COLOR` and `TERM=dumb`.
+- **`--dry-run` / `-n`** — Preview every file that would be created without writing anything to disk. Essential for scripting and sanity-checking.
 - **`--github`** — Auto-creates a private GitHub repo and pushes the initial commit (requires [gh](https://cli.github.com/) authentication).
 - **`--force`** — Scaffold into an existing non-empty directory. Use with caution.
 - **`--verbose` / `-v`** — Show debug output (template name, target path, file count).
@@ -79,7 +91,11 @@ workbench validate my-template
 - **Dynamic template discovery** — Adding a new template directory makes it immediately available — no code changes required.
 - **Validation** — `workbench validate` catches syntax errors and missing required files (`pyproject.toml.j2`) before they break a scaffold.
 
-### Generated Project Quality
+### Human-First Design
+- **Concise help for bare subcommands** — Running `workbench init` (with no args) shows a short example and a pointer to `--help`, not a raw argparse error.
+- **"Get started" suggestions after `init`** — After scaffolding, workbench prints the exact commands to install dependencies and run tests in the new project.
+- **Typo suggestions** — If you mistype a template name, workbench suggests the closest match (e.g., "Did you mean 'python'?").
+- **Actionable error messages** — When a directory already exists, the error explicitly suggests `--dry-run` / `-n` to preview and `--force` to overwrite.
 - **src-layout** for all Python projects
 - **pytest** configured with `pythonpath = ["src"]` for clean imports
 - **GitHub Actions CI** with `uv` setup and Python version matrix (3.12, 3.13)
@@ -289,6 +305,7 @@ workbench/
 
 | Date | Commit | Change |
 |------|--------|--------|
+| 2026-04-24 | — | **feat:** Add `-n` short flag for `--dry-run`; `--json`, `--plain`, and `--no-color` flags; concise help for bare subcommands; "Get started" suggestions after `init`; actionable error messages with `--dry-run` / `--force` hints |
 | 2026-04-24 | `b08af15` | **feat:** Richer error messages with difflib typo suggestions and empty-dir warnings |
 | 2026-04-24 | `6f948f0` | **feat:** Support custom template directories via `--template-dir` and `WORKBENCH_TEMPLATE_DIR` |
 | 2026-04-24 | `24ed93a` | **feat:** Add `workbench validate` command for template structural and Jinja2 checking |
