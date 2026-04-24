@@ -30,15 +30,17 @@ def get_template_info(template_name: str) -> dict:
         "files": sorted(files),
     }
 
-def init_project(template_name: str, project_name: str, target: Path, github: bool = False, project_description: str | None = None) -> None:
+def init_project(template_name: str, project_name: str, target: Path, github: bool = False, project_description: str | None = None, dry_run: bool = False) -> list[str]:
     template_path = TEMPLATE_DIR / template_name
     if not template_path.exists():
         raise ValueError(f"Template '{template_name}' not found")
 
-    target.mkdir(parents=True, exist_ok=False)
+    if not dry_run:
+        target.mkdir(parents=True, exist_ok=False)
     snake_name = project_name.replace("-", "_").lower()
 
     env = jinja2.Environment()
+    actions: list[str] = []
 
     for src in template_path.rglob("*"):
         rel = src.relative_to(template_path)
@@ -49,7 +51,8 @@ def init_project(template_name: str, project_name: str, target: Path, github: bo
         dst = Path(dst_str)
 
         if src.is_dir():
-            dst.mkdir(parents=True, exist_ok=True)
+            if not dry_run:
+                dst.mkdir(parents=True, exist_ok=True)
             continue
 
         if src.suffix == ".j2":
@@ -60,16 +63,23 @@ def init_project(template_name: str, project_name: str, target: Path, github: bo
                 project_description=project_description or "A Python project.",
             )
             dst = dst.with_suffix("")  # strip .j2
-            dst.write_text(rendered)
+            if not dry_run:
+                dst.write_text(rendered)
+            actions.append(str(dst.relative_to(target.parent) if dry_run else dst))
         else:
-            shutil.copy2(src, dst)
+            if not dry_run:
+                shutil.copy2(src, dst)
+            actions.append(str(dst.relative_to(target.parent) if dry_run else dst))
 
-    subprocess.run(["git", "init"], cwd=target, check=True, capture_output=True)
+    if not dry_run:
+        subprocess.run(["git", "init"], cwd=target, check=True, capture_output=True)
 
-    if github:
-        subprocess.run(
-            ["gh", "repo", "create", project_name, "--private", "--source=.", "--push"],
-            cwd=target,
-            check=False,
-            capture_output=True,
-        )
+        if github:
+            subprocess.run(
+                ["gh", "repo", "create", project_name, "--private", "--source=.", "--push"],
+                cwd=target,
+                check=False,
+                capture_output=True,
+            )
+
+    return actions

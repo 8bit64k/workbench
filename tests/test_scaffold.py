@@ -84,6 +84,22 @@ def test_target_exists_raises():
             init_project("python", "exists", target)
 
 
+def test_init_dry_run_does_not_create_files():
+    with tempfile.TemporaryDirectory() as tmp:
+        target = Path(tmp) / "dry-test"
+        init_project("python", "dry-test", target, dry_run=True)
+        assert not target.exists()
+
+
+def test_init_dry_run_returns_actions():
+    with tempfile.TemporaryDirectory() as tmp:
+        target = Path(tmp) / "dry-test"
+        actions = init_project("python", "dry-test", target, dry_run=True)
+        assert isinstance(actions, list)
+        assert any("pyproject.toml" in str(a) for a in actions)
+        assert any("README.md" in str(a) for a in actions)
+
+
 def test_get_templates_discovers_templates():
     from workbench.scaffold import get_templates
     templates = get_templates()

@@ -56,3 +56,13 @@ def test_info_unknown_template_exits_with_error(capsys, monkeypatch):
     assert exc.value.code == 2
     captured = capsys.readouterr()
     assert "invalid choice" in captured.err or "not found" in captured.err.lower()
+
+
+def test_init_dry_run_flag(capsys, monkeypatch, tmp_path):
+    monkeypatch.setattr(sys, "argv", ["workbench", "init", "python", "dry-proj", "--dry-run"])
+    monkeypatch.chdir(tmp_path)
+    main()
+    captured = capsys.readouterr()
+    assert "Would create" in captured.out
+    assert "pyproject.toml" in captured.out
+    assert not (tmp_path / "dry-proj").exists()
