@@ -88,19 +88,20 @@ workbench --generate-completion bash > /etc/bash_completion.d/workbench
 
 ### Configuration
 - **Global config file** — `~/.config/workbench/config.toml` stores your defaults.
-- **`workbench config set <key> <value>`** — Persist a default value (e.g., `author`, `email`, `license`).
+- **`workbench config set <key> <value>`** — Persist a default value. Only known keys are accepted.
 - **`workbench config get <key>`** — Retrieve a config value.
 - **`workbench config list`** — Show all configured values.
 - **`workbench config unset <key>`** — Remove a config key.
 
-Config values are automatically injected into every new project:
+Valid config keys and their effects:
 
-| Config key | Affects |
-|------------|---------|
-| `author` | `pyproject.toml` authors |
-| `email` | `pyproject.toml` author email |
-| `license` | `pyproject.toml` license (default: MIT) |
-| `default_template_dir` | Fallback template directory |
+| Config key | Default | Affects |
+|------------|---------|---------|
+| `author` | `None` | `pyproject.toml` authors |
+| `email` | `None` | `pyproject.toml` author email |
+| `license` | `MIT` | `pyproject.toml` license |
+| `default_template_dir` | `None` | Fallback template directory |
+| `default_output_format` | `ansi` | Default output format (reserved for future use) |
 
 ### Custom Templates
 - **`--template-dir <path>`** — Use an alternative template directory instead of the built-ins.

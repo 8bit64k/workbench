@@ -12,6 +12,8 @@ DEFAULTS: dict[str, Any] = {
     "default_template_dir": None,
 }
 
+VALID_KEYS = frozenset(DEFAULTS.keys())
+
 
 def _get_config_dir() -> Path:
     xdg_config = os.environ.get("XDG_CONFIG_HOME")

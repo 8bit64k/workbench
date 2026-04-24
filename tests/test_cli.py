@@ -346,6 +346,28 @@ def test_config_unset(capsys, monkeypatch, tmp_path):
     assert exc.value.code == 1
 
 
+def test_config_set_rejects_unknown_key(capsys, monkeypatch, tmp_path):
+    from workbench import config as config_module
+    monkeypatch.setattr(config_module, "_get_config_dir", lambda: tmp_path / "workbench")
+    monkeypatch.setattr(sys, "argv", ["workbench", "config", "set", "foo", "bar"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
+    captured = capsys.readouterr()
+    assert "Unknown config key" in captured.err
+
+
+def test_config_unset_rejects_unknown_key(capsys, monkeypatch, tmp_path):
+    from workbench import config as config_module
+    monkeypatch.setattr(config_module, "_get_config_dir", lambda: tmp_path / "workbench")
+    monkeypatch.setattr(sys, "argv", ["workbench", "config", "unset", "foo"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
+    captured = capsys.readouterr()
+    assert "Unknown config key" in captured.err
+
+
 def test_bare_config_shows_concise_help(capsys, monkeypatch):
     monkeypatch.setattr(sys, "argv", ["workbench", "config"])
     with pytest.raises(SystemExit) as exc:

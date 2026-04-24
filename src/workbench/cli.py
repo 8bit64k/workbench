@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from workbench import __version__
 from workbench.scaffold import init_project, get_templates, get_template_info
-from workbench.config import load_config, save_config, DEFAULTS
+from workbench.config import load_config, save_config, DEFAULTS, VALID_KEYS
 
 BUG_REPORT_URL = "https://github.com/8bit64k/workbench/issues"
 
@@ -472,15 +472,26 @@ def main():
             )
             sys.exit(1)
 
+        def _reject_unknown_config_key(key):
+            if key not in VALID_KEYS:
+                known = ", ".join(sorted(VALID_KEYS))
+                print(
+                    _fmt(f"Error: Unknown config key '{key}'. Valid keys: {known}", _RED, use_color),
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+
         cfg = load_config()
 
         if args.config_command == "set":
+            _reject_unknown_config_key(args.key)
             cfg[args.key] = args.value
             save_config(cfg)
             if not args.quiet:
                 print(f"Set {args.key} = {args.value}")
 
         elif args.config_command == "get":
+            _reject_unknown_config_key(args.key)
             val = cfg.get(args.key)
             if val is None:
                 print(_fmt(f"Error: '{args.key}' is not set.", _RED, use_color), file=sys.stderr)
@@ -488,12 +499,13 @@ def main():
             print(val)
 
         elif args.config_command == "list":
-            for key in sorted(DEFAULTS.keys()):
+            for key in sorted(VALID_KEYS):
                 val = cfg.get(key)
                 print(f"{key} = {val}")
 
         elif args.config_command == "unset":
-            if args.key in cfg:
+            _reject_unknown_config_key(args.key)
+            if args.key in cfg and cfg[args.key] is not None:
                 del cfg[args.key]
                 save_config(cfg)
                 if not args.quiet:
