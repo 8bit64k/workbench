@@ -35,9 +35,6 @@ def _fmt(text: str, color: str, use_color: bool) -> str:
 def _template_dir_from_args(args) -> Path | None:
     if args.template_dir:
         return Path(args.template_dir)
-    env = os.environ.get("WORKBENCH_TEMPLATE_DIR")
-    if env:
-        return Path(env)
     cfg = load_config()
     cfg_dir = cfg.get("default_template_dir")
     if cfg_dir:
@@ -219,7 +216,7 @@ def main():
     parser.add_argument("--verbose", "-v", action="store_true", help="Show debug output")
     parser.add_argument("--quiet", "-q", action="store_true", help="Suppress non-error output")
     parser.add_argument("--no-color", action="store_true", help="Disable colored output")
-    parser.add_argument("--template-dir", type=str, default=None, help="Custom template directory (or set WORKBENCH_TEMPLATE_DIR)")
+    parser.add_argument("--template-dir", type=str, default=None, help="Custom template directory")
     parser.add_argument("--generate-completion", choices=["bash", "zsh", "fish"], help="Print shell completion script to stdout")
     parser.add_argument("--check-update", action="store_true", help="Check PyPI for a newer version")
     subparsers = parser.add_subparsers(dest="command")

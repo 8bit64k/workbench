@@ -104,7 +104,6 @@ Config values are automatically injected into every new project:
 
 ### Custom Templates
 - **`--template-dir <path>`** — Use an alternative template directory instead of the built-ins.
-- **`WORKBENCH_TEMPLATE_DIR`** — Set this environment variable to permanently point to your own template collection.
 - **Template inheritance** — Create a `base/` template with shared files (Makefile, CI, pre-commit, .gitignore). Specific templates override base files.
 - **Post-init hooks** — Templates can include `post-init.sh` or `post-init.py` that runs automatically after scaffolding (e.g., initial dependency install, code generation).
 
@@ -416,7 +415,7 @@ workbench/
 | 2026-04-24 | — | **v4** Add global config (`~/.config/workbench/config.toml`), `workbench config` command, template inheritance with `base/` skeleton, shell completion generation, `--check-update`, post-init hooks, `.env.example` scaffolding |
 | 2026-04-24 | — | **v3** Add `-n` short flag for `--dry-run`; `--json`, `--plain`, and `--no-color` flags; concise help for bare subcommands; "Get started" suggestions after `init`; actionable error messages with `--dry-run` / `--force` hints |
 | 2026-04-24 | `b08af15` | **feat:** Richer error messages with difflib typo suggestions and empty-dir warnings |
-| 2026-04-24 | `6f948f0` | **feat:** Support custom template directories via `--template-dir` and `WORKBENCH_TEMPLATE_DIR` |
+| 2026-04-24 | `6f948f0` | **feat:** Support custom template directories via `--template-dir` |
 | 2026-04-24 | `24ed93a` | **feat:** Add `workbench validate` command for template structural and Jinja2 checking |
 | 2026-04-24 | `afe1729` | **feat:** Add `--force` flag for scaffolding into existing directories |
 | 2026-04-24 | — | **feat:** Add `--verbose` and `--quiet` flags to all CLI commands |
