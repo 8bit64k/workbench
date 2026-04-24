@@ -14,8 +14,16 @@ def get_templates(template_dir: Path | None = None) -> list[str]:
     """Return a sorted list of available template names."""
     dir_ = _resolve_dir(template_dir)
     return sorted(
-        p.name for p in dir_.iterdir() if p.is_dir() and not p.name.startswith(".")
+        p.name for p in dir_.iterdir() if p.is_dir() and not p.name.startswith(".") and p.name != "base"
     )
+
+
+def _list_template_files(template_path: Path) -> list[str]:
+    files = []
+    for src in template_path.rglob("*"):
+        if src.is_file():
+            files.append(str(src.relative_to(template_path)))
+    return files
 
 
 def get_template_info(template_name: str, template_dir: Path | None = None) -> dict:
@@ -25,11 +33,11 @@ def get_template_info(template_name: str, template_dir: Path | None = None) -> d
     if not template_path.exists():
         raise ValueError(f"Template '{template_name}' not found")
 
-    files = []
-    for src in template_path.rglob("*"):
-        if src.is_file():
-            rel = src.relative_to(template_path)
-            files.append(str(rel))
+    files = set()
+    base_path = dir_ / "base"
+    if base_path.exists():
+        files.update(_list_template_files(base_path))
+    files.update(_list_template_files(template_path))
 
     return {
         "name": template_name,
@@ -51,46 +59,41 @@ def validate_template(template_name: str, template_dir: Path | None = None) -> l
         errors.append("Missing required file: pyproject.toml.j2")
 
     env = jinja2.Environment()
-    for src in template_path.rglob("*.j2"):
+    j2_files = list(template_path.rglob("*.j2"))
+    base_path = dir_ / "base"
+    if base_path.exists():
+        j2_files.extend(base_path.rglob("*.j2"))
+
+    for src in j2_files:
         try:
             content = src.read_text()
             tpl = env.from_string(content)
             # Try rendering with dummy values
             tpl.render(project_name="test_project", project_description="Test.")
         except jinja2.TemplateSyntaxError as exc:
-            rel = src.relative_to(template_path)
+            rel = src.relative_to(template_path if src.is_relative_to(template_path) else base_path)
             errors.append(f"Jinja2 syntax error in {rel}: {exc.message}")
         except jinja2.UndefinedError as exc:
-            rel = src.relative_to(template_path)
+            rel = src.relative_to(template_path if src.is_relative_to(template_path) else base_path)
             errors.append(f"Undefined variable in {rel}: {exc}")
 
     return errors
 
 
-def init_project(template_name: str, project_name: str, target: Path, github: bool = False, project_description: str | None = None, dry_run: bool = False, force: bool = False, template_dir: Path | None = None, author: str | None = None, email: str | None = None, license: str | None = None) -> list[str]:
-    dir_ = _resolve_dir(template_dir)
-    template_path = dir_ / template_name
-    if not template_path.exists():
-        raise ValueError(f"Template '{template_name}' not found")
-
-    if not dry_run:
-        if target.exists():
-            # Allow empty dirs (just .git or nothing) without force
-            existing_files = [f for f in target.iterdir() if f.name != ".git"]
-            if existing_files and not force:
-                raise FileExistsError(
-                    f"Target directory '{target}' already exists and is not empty. "
-                    f"Use --force to scaffold into it anyway."
-                )
-        else:
-            target.mkdir(parents=True, exist_ok=False)
-    snake_name = project_name.replace("-", "_").lower()
-
-    env = jinja2.Environment()
-    actions: list[str] = []
-
-    for src in template_path.rglob("*"):
-        rel = src.relative_to(template_path)
+def _copy_template_tree(
+    source: Path,
+    target: Path,
+    env: jinja2.Environment,
+    snake_name: str,
+    project_description: str,
+    author: str | None,
+    email: str | None,
+    license: str | None,
+    dry_run: bool,
+    actions: list[str],
+) -> None:
+    for src in source.rglob("*"):
+        rel = src.relative_to(source)
         dst = target / rel
 
         # Expand {{project_name}} in directory names
@@ -120,6 +123,41 @@ def init_project(template_name: str, project_name: str, target: Path, github: bo
             if not dry_run:
                 shutil.copy2(src, dst)
             actions.append(str(dst.relative_to(target.parent) if dry_run else dst))
+
+
+def init_project(template_name: str, project_name: str, target: Path, github: bool = False, project_description: str | None = None, dry_run: bool = False, force: bool = False, template_dir: Path | None = None, author: str | None = None, email: str | None = None, license: str | None = None) -> list[str]:
+    dir_ = _resolve_dir(template_dir)
+    template_path = dir_ / template_name
+    if not template_path.exists():
+        raise ValueError(f"Template '{template_name}' not found")
+
+    if not dry_run:
+        if target.exists():
+            # Allow empty dirs (just .git or nothing) without force
+            existing_files = [f for f in target.iterdir() if f.name != ".git"]
+            if existing_files and not force:
+                raise FileExistsError(
+                    f"Target directory '{target}' already exists and is not empty. "
+                    f"Use --force to scaffold into it anyway."
+                )
+        else:
+            target.mkdir(parents=True, exist_ok=False)
+    snake_name = project_name.replace("-", "_").lower()
+
+    env = jinja2.Environment()
+    actions: list[str] = []
+
+    base_path = dir_ / "base"
+    if base_path.exists():
+        _copy_template_tree(
+            base_path, target, env, snake_name, project_description,
+            author, email, license, dry_run, actions,
+        )
+
+    _copy_template_tree(
+        template_path, target, env, snake_name, project_description,
+        author, email, license, dry_run, actions,
+    )
 
     if not dry_run:
         subprocess.run(["git", "init"], cwd=target, check=True, capture_output=True)
