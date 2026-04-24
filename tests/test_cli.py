@@ -66,3 +66,14 @@ def test_init_dry_run_flag(capsys, monkeypatch, tmp_path):
     assert "Would create" in captured.out
     assert "pyproject.toml" in captured.out
     assert not (tmp_path / "dry-proj").exists()
+
+
+def test_init_output_flag(capsys, monkeypatch, tmp_path):
+    out_dir = tmp_path / "custom"
+    out_dir.mkdir()
+    monkeypatch.setattr(sys, "argv", ["workbench", "init", "python", "out-proj", "--output", str(out_dir)])
+    monkeypatch.chdir(tmp_path)
+    main()
+    captured = capsys.readouterr()
+    assert "Created" in captured.out
+    assert (out_dir / "out-proj" / "pyproject.toml").exists()

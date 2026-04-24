@@ -15,6 +15,7 @@ def main():
     init_parser.add_argument("name")
     init_parser.add_argument("--github", action="store_true", help="Create a private GitHub repo and push")
     init_parser.add_argument("--dry-run", action="store_true", help="Show what would be created without writing files")
+    init_parser.add_argument("--output", "-o", type=str, default=".", help="Target directory (default: current directory)")
 
     list_parser = subparsers.add_parser("list", help="List available templates")
 
@@ -29,7 +30,7 @@ def main():
             "library": "A reusable Python library package.",
             "cli": "A command-line interface tool.",
         }
-        target = Path.cwd() / args.name
+        target = Path(args.output).resolve() / args.name
         actions = init_project(
             args.template,
             args.name,
