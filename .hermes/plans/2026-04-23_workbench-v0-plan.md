@@ -126,7 +126,7 @@ Add `rich` for colors, tables, progress bars, and pretty tracebacks. Update temp
 - Added `test_unknown_subcommand_exits_with_error` for invalid input
 - Generated CLI projects now have 5 passing tests with clean isolation
 
-### Option E: CI/DevEx (recommended next)
+### Option E: CI/DevEx (QUEUED for next session)
 - `.github/workflows/test.yml` template
 - `.pre-commit-config.yaml` with ruff + trailing-whitespace
 - `Makefile` or `justfile` with common commands

@@ -30,3 +30,12 @@ def test_unknown_subcommand_exits_with_error(capsys, monkeypatch):
     assert exc.value.code == 2
     captured = capsys.readouterr()
     assert "invalid choice" in captured.err or "error" in captured.err.lower()
+
+
+def test_list_command(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "list"])
+    main()
+    captured = capsys.readouterr()
+    assert "python" in captured.out
+    assert "library" in captured.out
+    assert "cli" in captured.out

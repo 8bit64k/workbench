@@ -82,3 +82,11 @@ def test_target_exists_raises():
         target.mkdir()
         with pytest.raises(FileExistsError):
             init_project("python", "exists", target)
+
+
+def test_get_templates_discovers_templates():
+    from workbench.scaffold import get_templates
+    templates = get_templates()
+    assert "python" in templates
+    assert "library" in templates
+    assert "cli" in templates

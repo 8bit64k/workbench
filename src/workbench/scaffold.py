@@ -6,6 +6,12 @@ import jinja2
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 
 
+def get_templates() -> list[str]:
+    """Return a sorted list of available template names."""
+    return sorted(
+        p.name for p in TEMPLATE_DIR.iterdir() if p.is_dir() and not p.name.startswith(".")
+    )
+
 def init_project(template_name: str, project_name: str, target: Path, github: bool = False, project_description: str | None = None) -> None:
     template_path = TEMPLATE_DIR / template_name
     if not template_path.exists():
