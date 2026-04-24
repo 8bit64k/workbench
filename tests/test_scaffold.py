@@ -50,6 +50,30 @@ def test_init_library_creates_structure():
         assert "from my_lib.core import greet" in readme
 
 
+def test_init_fastapi_creates_structure():
+    with tempfile.TemporaryDirectory() as tmp:
+        target = Path(tmp) / "my-api"
+        init_project("fastapi", "my-api", target)
+        assert (target / "pyproject.toml").exists()
+        assert (target / "README.md").exists()
+        assert (target / "src" / "my_api" / "__init__.py").exists()
+        assert (target / "src" / "my_api" / "main.py").exists()
+        assert (target / "tests" / "test_main.py").exists()
+        assert (target / ".git").is_dir()
+        assert (target / ".github" / "workflows" / "test.yml").exists()
+        # Verify FastAPI dependency
+        pyproject = (target / "pyproject.toml").read_text()
+        assert "fastapi" in pyproject
+        assert "uvicorn" in pyproject
+        # Verify health endpoint exists
+        main_code = (target / "src" / "my_api" / "main.py").read_text()
+        assert "@app.get" in main_code
+        assert "/health" in main_code
+        # Verify test uses TestClient
+        test_code = (target / "tests" / "test_main.py").read_text()
+        assert "TestClient" in test_code
+
+
 def test_init_python_creates_structure():
     with tempfile.TemporaryDirectory() as tmp:
         target = Path(tmp) / "my-project"

@@ -1,0 +1,18 @@
+# {{project_name}}
+
+{{project_description}}
+
+## Getting Started
+
+Install dependencies and run the development server:
+
+```bash
+uv pip install -e ".[dev]"
+uv run uvicorn {{project_name}}.main:app --reload
+```
+
+## Test
+
+```bash
+uv run pytest tests/ -v
+```
