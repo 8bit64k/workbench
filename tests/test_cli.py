@@ -77,3 +77,22 @@ def test_init_output_flag(capsys, monkeypatch, tmp_path):
     captured = capsys.readouterr()
     assert "Created" in captured.out
     assert (out_dir / "out-proj" / "pyproject.toml").exists()
+
+
+def test_init_quiet_suppresses_output(capsys, monkeypatch, tmp_path):
+    monkeypatch.setattr(sys, "argv", ["workbench", "init", "python", "quiet-proj", "--quiet"])
+    monkeypatch.chdir(tmp_path)
+    main()
+    captured = capsys.readouterr()
+    assert "Created" not in captured.out
+    assert (tmp_path / "quiet-proj" / "pyproject.toml").exists()
+
+
+def test_init_verbose_shows_debug_info(capsys, monkeypatch, tmp_path):
+    monkeypatch.setattr(sys, "argv", ["workbench", "init", "python", "verbose-proj", "--verbose"])
+    monkeypatch.chdir(tmp_path)
+    main()
+    captured = capsys.readouterr()
+    assert "Created" in captured.out
+    # Verbose should include extra context
+    assert "template" in captured.out.lower() or "files" in captured.out.lower()
