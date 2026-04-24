@@ -14,6 +14,7 @@ def test_init_cli_creates_structure():
         assert (target / "src" / "my_cli" / "cli.py").exists()
         assert (target / "tests" / "test_cli.py").exists()
         assert (target / ".git").is_dir()
+        assert (target / ".github" / "workflows" / "test.yml").exists()
         # Verify pyproject.toml has CLI entry point
         pyproject = (target / "pyproject.toml").read_text()
         assert "[project.scripts]" in pyproject
@@ -39,6 +40,7 @@ def test_init_library_creates_structure():
         assert (target / "src" / "my_lib" / "core.py").exists()
         assert (target / "tests" / "test_core.py").exists()
         assert (target / ".git").is_dir()
+        assert (target / ".github" / "workflows" / "test.yml").exists()
         # Verify pyproject.toml has library-specific content
         pyproject = (target / "pyproject.toml").read_text()
         assert "classifiers" in pyproject
@@ -57,6 +59,7 @@ def test_init_python_creates_structure():
         assert (target / "src" / "my_project" / "__init__.py").exists()
         assert (target / "tests" / "test_stub.py").exists()
         assert (target / ".git").is_dir()
+        assert (target / ".github" / "workflows" / "test.yml").exists()
 
 
 def test_init_with_github_calls_gh():
