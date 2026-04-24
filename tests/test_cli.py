@@ -354,3 +354,31 @@ def test_bare_config_shows_concise_help(capsys, monkeypatch):
     captured = capsys.readouterr()
     assert "workbench config" in captured.out
     assert "set" in captured.out.lower()
+
+
+def test_generate_completion_bash(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "--generate-completion", "bash"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 0
+    captured = capsys.readouterr()
+    assert "_workbench_completion" in captured.out
+    assert "init" in captured.out
+
+
+def test_generate_completion_zsh(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "--generate-completion", "zsh"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 0
+    captured = capsys.readouterr()
+    assert "#compdef workbench" in captured.out
+
+
+def test_generate_completion_fish(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "--generate-completion", "fish"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 0
+    captured = capsys.readouterr()
+    assert "complete -c workbench" in captured.out

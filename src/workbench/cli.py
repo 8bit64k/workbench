@@ -56,6 +56,139 @@ def _show_bare_subcommand_help(prog: str, description: str, example: str, extra_
     print("\nPass --help for full usage information.")
 
 
+_BASH_COMPLETION = '''_workbench_completion() {
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--version --verbose --quiet --no-color --template-dir --generate-completion -v -q"
+    commands="init list info validate config"
+
+    if [[ ${COMP_CWORD} -eq 1 ]]; then
+        COMPREPLY=( $(compgen -W "${opts} ${commands}" -- ${cur}) )
+        return 0
+    fi
+
+    case "${COMP_WORDS[1]}" in
+        init)
+            local init_opts="--github --dry-run --output --force --verbose --quiet -n -o -v -q"
+            COMPREPLY=( $(compgen -W "${init_opts}" -- ${cur}) )
+            ;;
+        list)
+            local list_opts="--json --plain --quiet"
+            COMPREPLY=( $(compgen -W "${list_opts}" -- ${cur}) )
+            ;;
+        info|validate)
+            local info_opts="--json --plain --quiet"
+            COMPREPLY=( $(compgen -W "${info_opts}" -- ${cur}) )
+            ;;
+        config)
+            local config_cmds="set get list unset"
+            COMPREPLY=( $(compgen -W "${config_cmds}" -- ${cur}) )
+            ;;
+    esac
+}
+complete -F _workbench_completion workbench
+'''
+
+_ZSH_COMPLETION = '''#compdef workbench
+
+local curcontext="$curcontext" state line
+typeset -A opt_args
+
+_workbench_commands() {
+    local commands
+    commands=(
+        'init:Initialize a new project'
+        'list:List available templates'
+        'info:Show template details'
+        'validate:Validate a template'
+        'config:Manage workbench configuration'
+    )
+    _describe -t commands 'workbench command' commands
+}
+
+_arguments -C \\
+    '(-v --verbose)'{-v,--verbose}'[Show debug output]' \\
+    '(-q --quiet)'{-q,--quiet}'[Suppress non-error output]' \\
+    '--no-color[Disable colored output]' \\
+    '--template-dir[Custom template directory]:directory:_directories' \\
+    '--generate-completion[Print shell completion]:shell:(bash zsh fish)' \\
+    '1: :_workbench_commands' \\
+    '*:: :->args'
+
+case "$line[1]" in
+    init)
+        _arguments \\
+            '--github[Create a private GitHub repo]' \\
+            '(-n --dry-run)'{-n,--dry-run}'[Preview without writing files]' \\
+            '(-o --output)'{-o,--output}'[Target directory]:directory:_directories' \\
+            '--force[Scaffold into existing directory]'
+        ;;
+    list)
+        _arguments \\
+            '--json[Output as JSON]' \\
+            '--plain[Output as plain text]'
+        ;;
+    info|validate)
+        _arguments \\
+            '--json[Output as JSON]' \\
+            '--plain[Output as plain text]'
+        ;;
+    config)
+        local config_cmds
+        config_cmds=(
+            'set:Set a config value'
+            'get:Get a config value'
+            'list:List all config values'
+            'unset:Remove a config key'
+        )
+        _describe -t commands 'config command' config_cmds
+        ;;
+esac
+'''
+
+_FISH_COMPLETION = '''complete -c workbench -f
+complete -c workbench -l version -d "Show version"
+complete -c workbench -l verbose -s v -d "Show debug output"
+complete -c workbench -l quiet -s q -d "Suppress non-error output"
+complete -c workbench -l no-color -d "Disable colored output"
+complete -c workbench -l template-dir -d "Custom template directory"
+complete -c workbench -l generate-completion -a "bash zsh fish" -d "Print completion script"
+
+complete -c workbench -n "not __fish_seen_subcommand_from init list info validate config" -a "init" -d "Initialize a new project"
+complete -c workbench -n "not __fish_seen_subcommand_from init list info validate config" -a "list" -d "List available templates"
+complete -c workbench -n "not __fish_seen_subcommand_from init list info validate config" -a "info" -d "Show template details"
+complete -c workbench -n "not __fish_seen_subcommand_from init list info validate config" -a "validate" -d "Validate a template"
+complete -c workbench -n "not __fish_seen_subcommand_from init list info validate config" -a "config" -d "Manage configuration"
+
+complete -c workbench -n "__fish_seen_subcommand_from init" -l github -d "Create a private GitHub repo"
+complete -c workbench -n "__fish_seen_subcommand_from init" -l dry-run -s n -d "Preview without writing files"
+complete -c workbench -n "__fish_seen_subcommand_from init" -l output -s o -d "Target directory"
+complete -c workbench -n "__fish_seen_subcommand_from init" -l force -d "Scaffold into existing directory"
+
+complete -c workbench -n "__fish_seen_subcommand_from list" -l json -d "Output as JSON"
+complete -c workbench -n "__fish_seen_subcommand_from list" -l plain -d "Output as plain text"
+
+complete -c workbench -n "__fish_seen_subcommand_from info validate" -l json -d "Output as JSON"
+complete -c workbench -n "__fish_seen_subcommand_from info validate" -l plain -d "Output as plain text"
+
+complete -c workbench -n "__fish_seen_subcommand_from config" -a "set" -d "Set a config value"
+complete -c workbench -n "__fish_seen_subcommand_from config" -a "get" -d "Get a config value"
+complete -c workbench -n "__fish_seen_subcommand_from config" -a "list" -d "List all config values"
+complete -c workbench -n "__fish_seen_subcommand_from config" -a "unset" -d "Remove a config key"
+'''
+
+
+def _print_completion(shell: str) -> None:
+    if shell == "bash":
+        print(_BASH_COMPLETION)
+    elif shell == "zsh":
+        print(_ZSH_COMPLETION)
+    elif shell == "fish":
+        print(_FISH_COMPLETION)
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="workbench",
@@ -67,6 +200,7 @@ def main():
     parser.add_argument("--quiet", "-q", action="store_true", help="Suppress non-error output")
     parser.add_argument("--no-color", action="store_true", help="Disable colored output")
     parser.add_argument("--template-dir", type=str, default=None, help="Custom template directory (or set WORKBENCH_TEMPLATE_DIR)")
+    parser.add_argument("--generate-completion", choices=["bash", "zsh", "fish"], help="Print shell completion script to stdout")
     subparsers = parser.add_subparsers(dest="command")
 
     init_parser = subparsers.add_parser(
@@ -141,6 +275,10 @@ def main():
     config_unset_parser.add_argument("key", help="Config key")
 
     args = parser.parse_args()
+
+    if args.generate_completion:
+        _print_completion(args.generate_completion)
+        sys.exit(0)
 
     use_color = _should_use_color(args.no_color)
     custom_dir = _template_dir_from_args(args)
