@@ -6,16 +6,22 @@ import jinja2
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 
 
-def get_templates() -> list[str]:
+def _resolve_dir(template_dir: Path | None) -> Path:
+    return template_dir if template_dir is not None else TEMPLATE_DIR
+
+
+def get_templates(template_dir: Path | None = None) -> list[str]:
     """Return a sorted list of available template names."""
+    dir_ = _resolve_dir(template_dir)
     return sorted(
-        p.name for p in TEMPLATE_DIR.iterdir() if p.is_dir() and not p.name.startswith(".")
+        p.name for p in dir_.iterdir() if p.is_dir() and not p.name.startswith(".")
     )
 
 
-def get_template_info(template_name: str) -> dict:
+def get_template_info(template_name: str, template_dir: Path | None = None) -> dict:
     """Return metadata about a template: name, files, and variables."""
-    template_path = TEMPLATE_DIR / template_name
+    dir_ = _resolve_dir(template_dir)
+    template_path = dir_ / template_name
     if not template_path.exists():
         raise ValueError(f"Template '{template_name}' not found")
 
@@ -30,9 +36,11 @@ def get_template_info(template_name: str) -> dict:
         "files": sorted(files),
     }
 
-def validate_template(template_name: str) -> list[str]:
+
+def validate_template(template_name: str, template_dir: Path | None = None) -> list[str]:
     """Validate a template for structural soundness. Returns list of error messages."""
-    template_path = TEMPLATE_DIR / template_name
+    dir_ = _resolve_dir(template_dir)
+    template_path = dir_ / template_name
     errors: list[str] = []
 
     if not template_path.exists():
@@ -58,8 +66,10 @@ def validate_template(template_name: str) -> list[str]:
 
     return errors
 
-def init_project(template_name: str, project_name: str, target: Path, github: bool = False, project_description: str | None = None, dry_run: bool = False, force: bool = False) -> list[str]:
-    template_path = TEMPLATE_DIR / template_name
+
+def init_project(template_name: str, project_name: str, target: Path, github: bool = False, project_description: str | None = None, dry_run: bool = False, force: bool = False, template_dir: Path | None = None) -> list[str]:
+    dir_ = _resolve_dir(template_dir)
+    template_path = dir_ / template_name
     if not template_path.exists():
         raise ValueError(f"Template '{template_name}' not found")
 

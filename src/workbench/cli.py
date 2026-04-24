@@ -1,8 +1,18 @@
 import argparse
+import os
 import sys
 from pathlib import Path
 from workbench import __version__
 from workbench.scaffold import init_project, get_templates, get_template_info
+
+
+def _template_dir_from_args(args) -> Path | None:
+    if args.template_dir:
+        return Path(args.template_dir)
+    env = os.environ.get("WORKBENCH_TEMPLATE_DIR")
+    if env:
+        return Path(env)
+    return None
 
 
 def main():
@@ -10,12 +20,13 @@ def main():
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("--verbose", "-v", action="store_true", help="Show debug output")
     parser.add_argument("--quiet", "-q", action="store_true", help="Suppress non-error output")
+    parser.add_argument("--template-dir", type=str, default=None, help="Custom template directory (or set WORKBENCH_TEMPLATE_DIR)")
     subparsers = parser.add_subparsers(dest="command")
 
     init_parser = subparsers.add_parser("init", help="Initialize a new project")
     init_parser.add_argument("--verbose", "-v", action="store_true", help="Show debug output")
     init_parser.add_argument("--quiet", "-q", action="store_true", help="Suppress non-error output")
-    init_parser.add_argument("template", choices=get_templates())
+    init_parser.add_argument("template")
     init_parser.add_argument("name")
     init_parser.add_argument("--github", action="store_true", help="Create a private GitHub repo and push")
     init_parser.add_argument("--dry-run", action="store_true", help="Show what would be created without writing files")
@@ -27,15 +38,20 @@ def main():
 
     info_parser = subparsers.add_parser("info", help="Show template details")
     info_parser.add_argument("--quiet", "-q", action="store_true", help="Suppress non-error output")
-    info_parser.add_argument("template", choices=get_templates())
+    info_parser.add_argument("template")
 
     validate_parser = subparsers.add_parser("validate", help="Validate a template")
     validate_parser.add_argument("--quiet", "-q", action="store_true", help="Suppress non-error output")
-    validate_parser.add_argument("template", choices=get_templates())
+    validate_parser.add_argument("template")
 
     args = parser.parse_args()
 
+    custom_dir = _template_dir_from_args(args)
+
     if args.command == "init":
+        if args.template not in get_templates(custom_dir):
+            print(f"Error: Unknown template '{args.template}'.", file=sys.stderr)
+            sys.exit(1)
         descriptions = {
             "python": "A Python project.",
             "library": "A reusable Python library package.",
@@ -54,6 +70,7 @@ def main():
             project_description=descriptions.get(args.template, "A Python project."),
             dry_run=args.dry_run,
             force=args.force,
+            template_dir=custom_dir,
         )
         if args.verbose:
             print(f"[debug] Files generated: {len(actions)}")
@@ -67,21 +84,27 @@ def main():
                 if args.github:
                     print("GitHub repo created (if gh is authenticated)")
     elif args.command == "list":
-        templates = get_templates()
+        templates = get_templates(custom_dir)
         if not args.quiet:
             print("Available templates:")
             for name in templates:
                 print(f"  {name}")
     elif args.command == "info":
-        info = get_template_info(args.template)
+        if args.template not in get_templates(custom_dir):
+            print(f"Error: Unknown template '{args.template}'.", file=sys.stderr)
+            sys.exit(1)
+        info = get_template_info(args.template, custom_dir)
         if not args.quiet:
             print(f"Template: {info['name']}")
             print(f"Files: {len(info['files'])}")
             for f in info['files']:
                 print(f"  {f}")
     elif args.command == "validate":
+        if args.template not in get_templates(custom_dir):
+            print(f"Error: Unknown template '{args.template}'.", file=sys.stderr)
+            sys.exit(1)
         from workbench.scaffold import validate_template
-        errors = validate_template(args.template)
+        errors = validate_template(args.template, custom_dir)
         if errors:
             if not args.quiet:
                 print(f"Template '{args.template}' is invalid:")
