@@ -30,6 +30,34 @@ def get_template_info(template_name: str) -> dict:
         "files": sorted(files),
     }
 
+def validate_template(template_name: str) -> list[str]:
+    """Validate a template for structural soundness. Returns list of error messages."""
+    template_path = TEMPLATE_DIR / template_name
+    errors: list[str] = []
+
+    if not template_path.exists():
+        errors.append(f"Template directory '{template_name}' not found")
+        return errors
+
+    if not (template_path / "pyproject.toml.j2").exists():
+        errors.append("Missing required file: pyproject.toml.j2")
+
+    env = jinja2.Environment()
+    for src in template_path.rglob("*.j2"):
+        try:
+            content = src.read_text()
+            tpl = env.from_string(content)
+            # Try rendering with dummy values
+            tpl.render(project_name="test_project", project_description="Test.")
+        except jinja2.TemplateSyntaxError as exc:
+            rel = src.relative_to(template_path)
+            errors.append(f"Jinja2 syntax error in {rel}: {exc.message}")
+        except jinja2.UndefinedError as exc:
+            rel = src.relative_to(template_path)
+            errors.append(f"Undefined variable in {rel}: {exc}")
+
+    return errors
+
 def init_project(template_name: str, project_name: str, target: Path, github: bool = False, project_description: str | None = None, dry_run: bool = False, force: bool = False) -> list[str]:
     template_path = TEMPLATE_DIR / template_name
     if not template_path.exists():

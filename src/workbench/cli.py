@@ -29,6 +29,10 @@ def main():
     info_parser.add_argument("--quiet", "-q", action="store_true", help="Suppress non-error output")
     info_parser.add_argument("template", choices=get_templates())
 
+    validate_parser = subparsers.add_parser("validate", help="Validate a template")
+    validate_parser.add_argument("--quiet", "-q", action="store_true", help="Suppress non-error output")
+    validate_parser.add_argument("template", choices=get_templates())
+
     args = parser.parse_args()
 
     if args.command == "init":
@@ -75,6 +79,18 @@ def main():
             print(f"Files: {len(info['files'])}")
             for f in info['files']:
                 print(f"  {f}")
+    elif args.command == "validate":
+        from workbench.scaffold import validate_template
+        errors = validate_template(args.template)
+        if errors:
+            if not args.quiet:
+                print(f"Template '{args.template}' is invalid:")
+                for err in errors:
+                    print(f"  - {err}")
+            sys.exit(1)
+        else:
+            if not args.quiet:
+                print(f"Template '{args.template}' is valid.")
     else:
         parser.print_help()
         sys.exit(1)

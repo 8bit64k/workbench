@@ -96,3 +96,27 @@ def test_init_verbose_shows_debug_info(capsys, monkeypatch, tmp_path):
     assert "Created" in captured.out
     # Verbose should include extra context
     assert "template" in captured.out.lower() or "files" in captured.out.lower()
+
+
+def test_validate_passes_for_good_template(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "validate", "python"])
+    main()
+    captured = capsys.readouterr()
+    assert "valid" in captured.out.lower() or "pass" in captured.out.lower()
+
+
+def test_validate_fails_for_broken_jinja(capsys, monkeypatch, tmp_path):
+    from workbench.scaffold import TEMPLATE_DIR
+    # Create a temporary broken template
+    broken = tmp_path / "broken"
+    broken.mkdir()
+    (broken / "pyproject.toml.j2").write_text("{{unclosed")
+    monkeypatch.setattr(sys, "argv", ["workbench", "validate", "broken"])
+    # Patch TEMPLATE_DIR temporarily
+    monkeypatch.setattr("workbench.scaffold.TEMPLATE_DIR", tmp_path)
+    monkeypatch.setattr("workbench.cli.get_templates", lambda: ["broken"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
+    captured = capsys.readouterr()
+    assert "invalid" in captured.out.lower() or "error" in captured.out.lower()
