@@ -45,9 +45,11 @@ def save_config(config: dict[str, Any]) -> None:
     """Atomically write config to disk."""
     path = get_config_path()
     _ensure_config_dir()
+    # Filter out None values — tomli_w cannot serialize None
+    clean = {k: v for k, v in config.items() if v is not None}
     tmp = path.with_suffix(".tmp")
     with open(tmp, "wb") as f:
-        tomli_w.dump(config, f)
+        tomli_w.dump(clean, f)
     tmp.replace(path)
 
 

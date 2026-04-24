@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from workbench import __version__
 from workbench.scaffold import init_project, get_templates, get_template_info
-from workbench.config import load_config
+from workbench.config import load_config, save_config, DEFAULTS
 
 BUG_REPORT_URL = "https://github.com/8bit64k/workbench/issues"
 
@@ -117,6 +117,28 @@ def main():
     validate_parser.add_argument("--json", action="store_true", help="Output as JSON")
     validate_parser.add_argument("--plain", action="store_true", help="Output as plain text (one per line)")
     validate_parser.add_argument("template", nargs="?", help="Template name")
+
+    config_parser = subparsers.add_parser(
+        "config",
+        help="Manage workbench configuration",
+        description="Get, set, or list configuration values.",
+        epilog=f"\nExamples:\n  $ workbench config set author '8bit64k'\n  $ workbench config get license\n  $ workbench config list\n\nReport issues: {BUG_REPORT_URL}",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    config_parser.add_argument("--quiet", "-q", action="store_true", help="Suppress non-error output")
+    config_subparsers = config_parser.add_subparsers(dest="config_command")
+
+    config_set_parser = config_subparsers.add_parser("set", help="Set a config value")
+    config_set_parser.add_argument("key", help="Config key")
+    config_set_parser.add_argument("value", help="Config value")
+
+    config_get_parser = config_subparsers.add_parser("get", help="Get a config value")
+    config_get_parser.add_argument("key", help="Config key")
+
+    config_list_parser = config_subparsers.add_parser("list", help="List all config values")
+
+    config_unset_parser = config_subparsers.add_parser("unset", help="Remove a config key")
+    config_unset_parser.add_argument("key", help="Config key")
 
     args = parser.parse_args()
 
@@ -273,6 +295,50 @@ def main():
                 pass  # Nothing to print in plain mode for success
             elif not args.quiet:
                 print(_fmt(f"Template '{args.template}' is valid.", _BOLD, use_color))
+
+    elif args.command == "config":
+        if not args.config_command:
+            _show_bare_subcommand_help(
+                "workbench config <command>",
+                "Manage workbench configuration. Commands: set, get, list, unset.",
+                "workbench config set author '8bit64k'",
+                extra_examples=[
+                    "workbench config get license",
+                    "workbench config list",
+                    "workbench config unset email",
+                ],
+            )
+            sys.exit(1)
+
+        cfg = load_config()
+
+        if args.config_command == "set":
+            cfg[args.key] = args.value
+            save_config(cfg)
+            if not args.quiet:
+                print(f"Set {args.key} = {args.value}")
+
+        elif args.config_command == "get":
+            val = cfg.get(args.key)
+            if val is None:
+                print(_fmt(f"Error: '{args.key}' is not set.", _RED, use_color), file=sys.stderr)
+                sys.exit(1)
+            print(val)
+
+        elif args.config_command == "list":
+            for key in sorted(DEFAULTS.keys()):
+                val = cfg.get(key)
+                print(f"{key} = {val}")
+
+        elif args.config_command == "unset":
+            if args.key in cfg:
+                del cfg[args.key]
+                save_config(cfg)
+                if not args.quiet:
+                    print(f"Unset {args.key}")
+            else:
+                print(_fmt(f"Error: '{args.key}' is not set.", _RED, use_color), file=sys.stderr)
+                sys.exit(1)
 
     else:
         parser.print_help()

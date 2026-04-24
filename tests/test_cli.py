@@ -306,3 +306,51 @@ def test_validate_fails_for_broken_jinja(capsys, monkeypatch, tmp_path):
     assert exc.value.code == 1
     captured = capsys.readouterr()
     assert "invalid" in captured.out.lower() or "error" in captured.out.lower()
+
+
+def test_config_set_and_get(capsys, monkeypatch, tmp_path):
+    from workbench import config as config_module
+    monkeypatch.setattr(config_module, "_get_config_dir", lambda: tmp_path / "workbench")
+    monkeypatch.setattr(sys, "argv", ["workbench", "config", "set", "author", "8bit64k"])
+    main()
+    captured = capsys.readouterr()
+    assert "Set author = 8bit64k" in captured.out
+    monkeypatch.setattr(sys, "argv", ["workbench", "config", "get", "author"])
+    main()
+    captured = capsys.readouterr()
+    assert captured.out.strip() == "8bit64k"
+
+
+def test_config_list(capsys, monkeypatch, tmp_path):
+    from workbench import config as config_module
+    monkeypatch.setattr(config_module, "_get_config_dir", lambda: tmp_path / "workbench")
+    config_module.save_config({"author": "Test", "license": "Apache-2.0"})
+    monkeypatch.setattr(sys, "argv", ["workbench", "config", "list"])
+    main()
+    captured = capsys.readouterr()
+    assert "author = Test" in captured.out
+    assert "license = Apache-2.0" in captured.out
+
+
+def test_config_unset(capsys, monkeypatch, tmp_path):
+    from workbench import config as config_module
+    monkeypatch.setattr(config_module, "_get_config_dir", lambda: tmp_path / "workbench")
+    config_module.save_config({"email": "test@example.com"})
+    monkeypatch.setattr(sys, "argv", ["workbench", "config", "unset", "email"])
+    main()
+    captured = capsys.readouterr()
+    assert "Unset email" in captured.out
+    monkeypatch.setattr(sys, "argv", ["workbench", "config", "get", "email"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
+
+
+def test_bare_config_shows_concise_help(capsys, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["workbench", "config"])
+    with pytest.raises(SystemExit) as exc:
+        main()
+    assert exc.value.code == 1
+    captured = capsys.readouterr()
+    assert "workbench config" in captured.out
+    assert "set" in captured.out.lower()
