@@ -52,11 +52,11 @@ workbench init python my-project --github
 
 ### Discovery & Inspection
 - **`workbench list`** — Dynamically discovers available templates from the templates directory. New templates automatically appear here.
-- **`workbench info &lt;template&gt;`** — Shows template metadata: name, file count, and complete file tree. No surprises.
+- **`workbench info <template>`** — Shows template metadata: name, file count, and complete file tree. No surprises.
 
 ### Scaffolding
-- **`workbench init &lt;template&gt; &lt;name&gt;`** — Generates a complete project from a template.
-- **`--output &lt;path&gt;` / `-o &lt;path&gt;`** — Scaffold into a custom directory instead of the current working directory.
+- **`workbench init <template> <name>`** — Generates a complete project from a template.
+- **`--output <path>` / `-o <path>`** — Scaffold into a custom directory instead of the current working directory.
 - **`--dry-run`** — Preview every file that would be created without writing anything to disk. Essential for scripting and sanity-checking.
 - **`--github`** — Auto-creates a private GitHub repo and pushes the initial commit (requires [gh](https://cli.github.com/) authentication).
 
@@ -103,7 +103,7 @@ Available templates:
   python
 ```
 
-### `workbench info &lt;template&gt;`
+### `workbench info <template>`
 ```bash
 $ workbench info cli
 Template: cli
@@ -118,7 +118,7 @@ Files: 8
   tests/test_cli.py
 ```
 
-### `workbench init &lt;template&gt; &lt;name&gt; [options]`
+### `workbench init <template> <name> [options]`
 
 **Basic usage:**
 ```bash
@@ -236,7 +236,7 @@ workbench/
 | 2026-04-23 | `df4f87f` | **feat:** Add `--github` flag for auto repo creation |
 | 2026-04-23 | `199ee81` | **feat:** Error handling for unknown templates and existing dirs |
 | 2026-04-23 | `9d231d1` | **feat:** Run `git init` in scaffolded projects |
-| 2026-04-23 | `fb15fb2` | **feat:** Implement `workbench init python &lt;name&gt;` |
+| 2026-04-23 | `fb15fb2` | **feat:** Implement `workbench init python <name>` |
 
 ---
 
