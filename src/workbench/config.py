@@ -8,7 +8,6 @@ DEFAULTS: dict[str, Any] = {
     "author": None,
     "email": None,
     "license": "MIT",
-    "default_output_format": "ansi",
     "default_template_dir": None,
 }
 

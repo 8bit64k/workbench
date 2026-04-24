@@ -16,7 +16,6 @@ def test_default_config(isolated_config):
     assert cfg["author"] is None
     assert cfg["email"] is None
     assert cfg["license"] == "MIT"
-    assert cfg["default_output_format"] == "ansi"
     assert cfg["default_template_dir"] is None
 
 

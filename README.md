@@ -101,7 +101,8 @@ Valid config keys and their effects:
 | `email` | `None` | `pyproject.toml` author email |
 | `license` | `MIT` | `pyproject.toml` license |
 | `default_template_dir` | `None` | Fallback template directory |
-| `default_output_format` | `ansi` | Default output format (reserved for future use) |
+
+> **Note on output flags:** If both `--json` and `--plain` are passed, `--json` takes precedence. These flags are mutually exclusive — pick one per invocation.
 
 ### Custom Templates
 - **`--template-dir <path>`** — Use an alternative template directory instead of the built-ins.
