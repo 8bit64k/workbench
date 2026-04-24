@@ -12,6 +12,7 @@
 - **Task automation** (Makefile with `test`, `install`, `clean` targets)
 - **Code quality hooks** (pre-commit with ruff and standard checks where applicable)
 - **Clean git init** (no commits, just a ready repo)
+- **Environment variable scaffolding** (`.env.example` + `python-dotenv` pre-configured)
 
 ---
 
@@ -58,6 +59,9 @@ workbench init python my-project --github
 
 # Validate a custom template for structural and Jinja2 correctness
 workbench validate my-template
+
+# Generate shell completions
+workbench --generate-completion bash > /etc/bash_completion.d/workbench
 ```
 
 ---
@@ -80,10 +84,29 @@ workbench validate my-template
 - **`--force`** — Scaffold into an existing non-empty directory. Use with caution.
 - **`--verbose` / `-v`** — Show debug output (template name, target path, file count).
 - **`--quiet` / `-q`** — Suppress non-error output. Useful in CI pipelines.
+- **`--no-hooks`** — Skip post-init hooks (see Post-Init Hooks below).
+
+### Configuration
+- **Global config file** — `~/.config/workbench/config.toml` stores your defaults.
+- **`workbench config set <key> <value>`** — Persist a default value (e.g., `author`, `email`, `license`).
+- **`workbench config get <key>`** — Retrieve a config value.
+- **`workbench config list`** — Show all configured values.
+- **`workbench config unset <key>`** — Remove a config key.
+
+Config values are automatically injected into every new project:
+
+| Config key | Affects |
+|------------|---------|
+| `author` | `pyproject.toml` authors |
+| `email` | `pyproject.toml` author email |
+| `license` | `pyproject.toml` license (default: MIT) |
+| `default_template_dir` | Fallback template directory |
 
 ### Custom Templates
 - **`--template-dir <path>`** — Use an alternative template directory instead of the built-ins.
 - **`WORKBENCH_TEMPLATE_DIR`** — Set this environment variable to permanently point to your own template collection.
+- **Template inheritance** — Create a `base/` template with shared files (Makefile, CI, pre-commit, .gitignore). Specific templates override base files.
+- **Post-init hooks** — Templates can include `post-init.sh` or `post-init.py` that runs automatically after scaffolding (e.g., initial dependency install, code generation).
 
 ### Template System
 - **Jinja2-powered rendering** — Template files use `.j2` extension and render `{{project_name}}`, `{{project_description}}`, and other variables.
@@ -96,12 +119,15 @@ workbench validate my-template
 - **"Get started" suggestions after `init`** — After scaffolding, workbench prints the exact commands to install dependencies and run tests in the new project.
 - **Typo suggestions** — If you mistype a template name, workbench suggests the closest match (e.g., "Did you mean 'python'?").
 - **Actionable error messages** — When a directory already exists, the error explicitly suggests `--dry-run` / `-n` to preview and `--force` to overwrite.
+- **Shell completion** — Native completion scripts for bash, zsh, and fish via `--generate-completion`.
+- **Version check** — `workbench --check-update` queries PyPI and tells you if a newer version is available.
 - **src-layout** for all Python projects
 - **pytest** configured with `pythonpath = ["src"]` for clean imports
 - **GitHub Actions CI** with `uv` setup and Python version matrix (3.12, 3.13)
 - **Makefile** with `test`, `install`, `clean` (and template-specific targets like `lint`, `run`)
 - **pre-commit hooks** (ruff, trailing-whitespace, end-of-file-fixer, check-yaml, check-added-large-files)
 - **Proper `.gitignore`** (`.venv`, `__pycache__`, `.pyc`)
+- **Environment variables** — `.env.example` + `python-dotenv` in dev dependencies
 - **Tests that don't suck** — monkeypatch-based CLI isolation, no brittle `sys.argv` mutation
 
 ---
@@ -123,6 +149,46 @@ workbench validate my-template
 ```bash
 $ workbench --version
 workbench 0.1.0
+```
+
+### `workbench --check-update`
+```bash
+$ workbench --check-update
+A new version of workbench is available: 0.2.0 (you have 0.1.0)
+Run `uv pip install -U workbench` to upgrade.
+```
+
+### `workbench --generate-completion <shell>`
+```bash
+# Bash
+$ workbench --generate-completion bash > /etc/bash_completion.d/workbench
+
+# Zsh
+$ workbench --generate-completion zsh > /usr/local/share/zsh/site-functions/_workbench
+
+# Fish
+$ workbench --generate-completion fish > ~/.config/fish/completions/workbench.fish
+```
+
+### `workbench config`
+```bash
+# Set your defaults once, use them forever
+$ workbench config set author "Ada Lovelace"
+$ workbench config set email "ada@example.com"
+$ workbench config set license "Apache-2.0"
+
+# Check what you've set
+$ workbench config get author
+Ada Lovelace
+
+# See everything
+$ workbench config list
+author = "Ada Lovelace"
+email = "ada@example.com"
+license = "Apache-2.0"
+
+# Remove a key
+$ workbench config unset email
 ```
 
 ### `workbench list`
@@ -208,6 +274,12 @@ $ workbench init python existing-project --force
 Created python project 'existing-project' at /home/8bit64k/Code/existing-project
 ```
 
+**Skip post-init hooks:**
+```bash
+$ workbench init cli my-tool --no-hooks
+Created cli project 'my-tool' at /home/8bit64k/Code/my-tool
+```
+
 **Verbose output:**
 ```bash
 $ workbench init python verbose-proj --verbose
@@ -267,6 +339,39 @@ workbench validate my-custom-template
 workbench --template-dir ~/templates init my-custom-template new-project
 ```
 
+### Setting up personal defaults
+
+```bash
+# One-time setup
+workbench config set author "8bit64k"
+workbench config set email "8bit64k@example.com"
+workbench config set license "MIT"
+
+# From now on, every project is pre-personalized
+workbench init python my-script
+# pyproject.toml will already have your name, email, and license
+```
+
+### Creating a template with a post-init hook
+
+```bash
+# In your custom template directory:
+mkdir -p ~/templates/custom-cli
+cp -r ~/Code/workbench/src/workbench/templates/cli/* ~/templates/custom-cli/
+
+# Add a hook that runs after scaffolding
+cat > ~/templates/custom-cli/post-init.sh << 'EOF'
+#!/bin/sh
+echo "Setting up pre-commit..."
+cd "$WORKBENCH_TARGET"
+pre-commit install
+EOF
+chmod +x ~/templates/custom-cli/post-init.sh
+
+# Use it
+workbench --template-dir ~/templates init custom-cli my-tool
+```
+
 ---
 
 ## Development
@@ -287,14 +392,17 @@ workbench/
 │   └── workbench/
 │       ├── __init__.py      # Version
 │       ├── cli.py           # argparse entrypoint
+│       ├── config.py        # Global config (TOML, XDG-compliant)
 │       └── scaffold.py      # Template discovery + project generation
 ├── src/workbench/templates/
+│   ├── base/                # Shared files (CI, Makefile, pre-commit, .gitignore)
 │   ├── cli/                 # CLI tool template
 │   ├── fastapi/             # FastAPI service template
 │   ├── library/             # Reusable package template
 │   └── python/              # Bare-bones Python template
 ├── tests/
 │   ├── test_cli.py          # CLI behavior tests
+│   ├── test_config.py       # Config persistence tests
 │   └── test_scaffold.py     # Template generation tests
 └── pyproject.toml
 ```
@@ -305,7 +413,8 @@ workbench/
 
 | Date | Commit | Change |
 |------|--------|--------|
-| 2026-04-24 | — | **feat:** Add `-n` short flag for `--dry-run`; `--json`, `--plain`, and `--no-color` flags; concise help for bare subcommands; "Get started" suggestions after `init`; actionable error messages with `--dry-run` / `--force` hints |
+| 2026-04-24 | — | **v4** Add global config (`~/.config/workbench/config.toml`), `workbench config` command, template inheritance with `base/` skeleton, shell completion generation, `--check-update`, post-init hooks, `.env.example` scaffolding |
+| 2026-04-24 | — | **v3** Add `-n` short flag for `--dry-run`; `--json`, `--plain`, and `--no-color` flags; concise help for bare subcommands; "Get started" suggestions after `init`; actionable error messages with `--dry-run` / `--force` hints |
 | 2026-04-24 | `b08af15` | **feat:** Richer error messages with difflib typo suggestions and empty-dir warnings |
 | 2026-04-24 | `6f948f0` | **feat:** Support custom template directories via `--template-dir` and `WORKBENCH_TEMPLATE_DIR` |
 | 2026-04-24 | `24ed93a` | **feat:** Add `workbench validate` command for template structural and Jinja2 checking |
