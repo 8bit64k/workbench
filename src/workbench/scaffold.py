@@ -1,6 +1,8 @@
 from pathlib import Path
+import os
 import shutil
 import subprocess
+import sys
 import jinja2
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
@@ -125,7 +127,7 @@ def _copy_template_tree(
             actions.append(str(dst.relative_to(target.parent) if dry_run else dst))
 
 
-def init_project(template_name: str, project_name: str, target: Path, github: bool = False, project_description: str | None = None, dry_run: bool = False, force: bool = False, template_dir: Path | None = None, author: str | None = None, email: str | None = None, license: str | None = None) -> list[str]:
+def init_project(template_name: str, project_name: str, target: Path, github: bool = False, project_description: str | None = None, dry_run: bool = False, force: bool = False, template_dir: Path | None = None, author: str | None = None, email: str | None = None, license: str | None = None, no_hooks: bool = False) -> list[str]:
     dir_ = _resolve_dir(template_dir)
     template_path = dir_ / template_name
     if not template_path.exists():
@@ -160,6 +162,20 @@ def init_project(template_name: str, project_name: str, target: Path, github: bo
     )
 
     if not dry_run:
+        # Run post-init hooks if present
+        if not no_hooks:
+            for hook_name in ("post-init.sh", "post-init.py"):
+                hook = template_path / hook_name
+                if hook.exists():
+                    env = os.environ.copy()
+                    env["WORKBENCH_PROJECT_NAME"] = project_name
+                    env["WORKBENCH_PROJECT_PATH"] = str(target.resolve())
+                    if hook_name.endswith(".sh"):
+                        subprocess.run(["sh", str(hook)], cwd=target, env=env, check=False)
+                    else:
+                        subprocess.run([sys.executable, str(hook)], cwd=target, env=env, check=False)
+                    break  # Only run one hook
+
         subprocess.run(["git", "init"], cwd=target, check=True, capture_output=True)
 
         if github:

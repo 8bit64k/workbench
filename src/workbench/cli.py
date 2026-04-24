@@ -218,6 +218,7 @@ def main():
     init_parser.add_argument("--dry-run", "-n", action="store_true", help="Show what would be created without writing files")
     init_parser.add_argument("--output", "-o", type=str, default=".", help="Target directory (default: current directory)")
     init_parser.add_argument("--force", action="store_true", help="Scaffold into an existing non-empty directory")
+    init_parser.add_argument("--no-hooks", action="store_true", help="Skip post-init hooks")
 
     list_parser = subparsers.add_parser(
         "list",
@@ -328,6 +329,7 @@ def main():
                 author=cfg.get("author"),
                 email=cfg.get("email"),
                 license=cfg.get("license"),
+                no_hooks=args.no_hooks,
             )
         except FileExistsError as exc:
             msg = _fmt(f"Error: {exc}", _RED, use_color)

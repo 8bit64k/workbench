@@ -382,3 +382,35 @@ def test_generate_completion_fish(capsys, monkeypatch):
     assert exc.value.code == 0
     captured = capsys.readouterr()
     assert "complete -c workbench" in captured.out
+
+
+def test_post_init_hook_runs(capsys, monkeypatch, tmp_path):
+    from workbench.scaffold import TEMPLATE_DIR
+    # Create a temporary template with a post-init hook
+    hook_template = tmp_path / "hook_template"
+    hook_template.mkdir()
+    (hook_template / "pyproject.toml.j2").write_text("[project]\nname = \"{{project_name}}\"\n")
+    (hook_template / "post-init.sh").write_text("#!/bin/sh\necho 'hook-ran' > hook-marker.txt")
+    monkeypatch.setattr(sys, "argv", ["workbench", "init", "hook_template", "hook-proj"])
+    monkeypatch.setattr("workbench.scaffold.TEMPLATE_DIR", tmp_path)
+    monkeypatch.setattr("workbench.cli.get_templates", lambda _custom_dir=None: ["hook_template"])
+    monkeypatch.chdir(tmp_path)
+    main()
+    target = tmp_path / "hook-proj"
+    assert (target / "hook-marker.txt").exists()
+    assert "hook-ran" in (target / "hook-marker.txt").read_text()
+
+
+def test_post_init_hook_skipped_with_no_hooks(capsys, monkeypatch, tmp_path):
+    from workbench.scaffold import TEMPLATE_DIR
+    hook_template = tmp_path / "hook_template2"
+    hook_template.mkdir()
+    (hook_template / "pyproject.toml.j2").write_text("[project]\nname = \"{{project_name}}\"\n")
+    (hook_template / "post-init.sh").write_text("#!/bin/sh\necho 'hook-ran' > hook-marker.txt")
+    monkeypatch.setattr(sys, "argv", ["workbench", "init", "hook_template2", "hook-proj2", "--no-hooks"])
+    monkeypatch.setattr("workbench.scaffold.TEMPLATE_DIR", tmp_path)
+    monkeypatch.setattr("workbench.cli.get_templates", lambda _custom_dir=None: ["hook_template2"])
+    monkeypatch.chdir(tmp_path)
+    main()
+    target = tmp_path / "hook-proj2"
+    assert not (target / "hook-marker.txt").exists()
